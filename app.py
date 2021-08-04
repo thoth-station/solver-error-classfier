@@ -122,7 +122,6 @@ def remove_stopwords(text: str) -> str:
 
 def preprocess_document(solver_path: str) -> DataFrame:
     """Preprocess document with all helperfunctions listed above to output dataframe with error_processed column."""
-    count = 0  # not necessarily
     error_documents = []
     for path in pathlib.Path(solver_path).iterdir():
         if path.is_file():
@@ -131,12 +130,8 @@ def preprocess_document(solver_path: str) -> DataFrame:
             current_file = open(path, "r")
             data = json.load(current_file)
             if data["result"]["errors"] != []:
-                if count > 5000:
-                    error_documents.append(data)
-                count += 1
+                error_documents.append(data)
             current_file.close()
-            if count > 5500:
-                break
     random.shuffle(error_documents)
     _LOGGER.debug("number of docs: %r", len(error_documents))
     df = json_normalize(error_documents, sep="_")

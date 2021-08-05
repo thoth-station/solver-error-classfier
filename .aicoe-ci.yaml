@@ -1,0 +1,14 @@
+check:
+  - thoth-build
+build:
+  base-image: quay.io/thoth-station/s2i-thoth-ubi8-py38:v0.26.0
+  build-stratergy: Source
+  registry: quay.io
+  registry-org: thoth-station
+  registry-project: solver-error-classifier-job
+  registry-secret: thoth-station-thoth-pusher-secret
+deploy:
+  project-org: "thoth-station"
+  project-name: "thoth-application"
+  image-name: "solver-error-classifier-job"
+  overlay-contextpath: "solver-error-classifier-job/overlays/test/imagestreamtag.yaml"

@@ -21,10 +21,10 @@ from template.version import __version__
 import logging
 import random
 from typing import List
-from typing import Optional
 from typing import Tuple
 import pathlib
 import pickle
+import os
 
 import numpy as np
 import pandas as pd
@@ -125,7 +125,7 @@ def preprocess_document(solver_path: str) -> DataFrame:
     error_documents = []
     for path in pathlib.Path(solver_path).iterdir():
         if path.is_file():
-            document_id = str(path)[8:]
+            document_id = str(path).split("/")[-1]
             _LOGGER.debug("Processing solver document %r", document_id)
             current_file = open(path, "r")
             data = json.load(current_file)
@@ -159,14 +159,13 @@ def preprocess_document(solver_path: str) -> DataFrame:
     return df_errors
 
 
-def cluster_errors(*, solver_path: str) -> Tuple[KNeighborsClassifier, TfidfVectorizer]:
+def cluster_errors(*, solver_path: str, max_d: int) -> Tuple[KNeighborsClassifier, TfidfVectorizer]:
     """Create model and train it on solver errors, model can then classify errors from solver."""
     df_errors = preprocess_document(solver_path)
     vectorizer = TfidfVectorizer(stop_words={"english"})
     x = vectorizer.fit_transform(df_errors["message_processed"])
     x_arr = x.toarray()
     z = linkage(x_arr, "ward")
-    max_d = 3
     clusters = fcluster(z, max_d, criterion="distance")
     _LOGGER.debug("Clusters: %r", set(clusters))
 
@@ -175,9 +174,16 @@ def cluster_errors(*, solver_path: str) -> Tuple[KNeighborsClassifier, TfidfVect
         df_grouped = df.iloc[indices]
         return df_grouped
 
-    for i in range(1, len(set(clusters)) + 1):
-        _LOGGER.debug("Cluster %r", i)
-        _LOGGER.debug(get_data_from_cluster(df_errors, clusters, i))
+    try:
+        if not os.path.exists("clusters"):
+            os.makedirs("clusters")
+        for i in range(1, len(set(clusters)) + 1):
+            _LOGGER.debug("Cluster %r", i)
+            data = get_data_from_cluster(df_errors, clusters, i)
+            _LOGGER.debug(data)
+            data["message_processed"].to_csv("clusters/{0}.csv".format(i))
+    except OSError as e:
+        _LOGGER.error("Could not create clusters directory: %r", e)
 
     knn = KNeighborsClassifier()
 
@@ -191,6 +197,7 @@ def classification(*, model: KNeighborsClassifier, vectorizer: TfidfVectorizer, 
     x = vectorizer.transform(df_errors["message_processed"])
     x_arr = x.toarray()
     result = model.predict(x_arr)
+    df_errors["message_processed"].to_csv("clusters/result.csv")
     return result
 
 
@@ -203,7 +210,7 @@ def _print_version(ctx: click.Context, _, value: str):
     ctx.exit()
 
 
-@click.command()
+@click.group()
 @click.pass_context
 @click.option(
     "-v",
@@ -220,63 +227,9 @@ def _print_version(ctx: click.Context, _, value: str):
     expose_value=False,
     help="Print version and exit.",
 )
-@click.option(
-    "--classify",
-    is_flag=True,
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_CLASSIFY",
-    help="Classifying data from model file.",
-)
-@click.option(
-    "--train",
-    is_flag=True,
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_TRAIN",
-    help="Training model based on solver document file.",
-)
-@click.option(
-    "--model-path",
-    help="path to the model file if classifying.",
-    metavar="FILE",
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_MODEL_PATH",
-    type=str,
-)
-@click.option(
-    "--vectorizer-path",
-    help="path to the tfidf vectorizer to preprocess words with the model.",
-    metavar="FILE",
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_VECTORIZER_PATH",
-    type=str,
-)
-@click.option(
-    "--train-dataset",
-    help="path to the solver dataset to cluster on.",
-    metavar="FOLDER",
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_TRAIN_DATASET",
-    type=str,
-)
-@click.option(
-    "--predict-dataset",
-    help="path to the solver dataset to predict error.",
-    metavar="FOLDER",
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_CLASSIFY_DATASET",
-    type=str,
-)
-@click.option(
-    "--output",
-    help="Store result to a file.",
-    metavar="FILE",
-    envvar="THOTH_SOLVER_ERROR_CLASSIFIER_OUTPUT",
-    type=str,
-)
 def cli(
     _: click.Context,
     verbose: bool = False,
-    classify: bool = False,
-    train: bool = False,
-    model_path: Optional[str] = None,
-    vectorizer_path: Optional[str] = None,
-    train_dataset: Optional[str] = None,
-    predict_dataset: Optional[str] = None,
-    output: str = None,
 ):
     """Aggregate Github URLs for GitHub hosted projects on PyPI."""
     if verbose:
@@ -285,37 +238,39 @@ def cli(
     _LOGGER.debug("Debug mode is on")
     _LOGGER.info("Version: %s", __component_version__)
 
-    if classify:
-        if train:
-            _LOGGER.error("Only one of either train or classify can be selected.")
-            return
-        if model_path:
-            if vectorizer_path:
-                model = pickle.load((open(model_path, "rb")))
-                vectorizer = pickle.load(open(vectorizer_path, "rb"))
-                if output:
-                    if predict_dataset:
-                        _LOGGER.debug(
-                            classification(model=model, vectorizer=vectorizer, classify_dataset=predict_dataset)
-                        )
-                else:
-                    _LOGGER.error("No output file given.")
-            else:
-                _LOGGER.error("No vectorizer path given.")
-        else:
-            _LOGGER.error("No model path given.")
-    elif train:
-        if train_dataset:
-            if output:
-                model, vectorizer = cluster_errors(solver_path=train_dataset)
-                knn_pickle = open(output, "wb")
-                vectorizer_pickle = open("vectorizer_" + output, "wb")
-                pickle.dump(model, knn_pickle)
-                pickle.dump(vectorizer, vectorizer_pickle)
-            else:
-                _LOGGER.error("No output file given.")
-        else:
-            _LOGGER.error("No dataset path given.")
+
+@cli.command("classify")
+@click.argument("model-path", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_MODEL_PATH")
+@click.argument("vectorizer-path", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_VECTORIZER_PATH")
+@click.argument("predict-dataset", nargs=1, metavar="FOLDER", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_PREDICT_DATASET")
+@click.argument("output", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_OUTPUT")
+def classify(model_path: str, vectorizer_path: str, predict_dataset: str, output: str) -> None:
+    """Classify dataset with given model and vectorizer."""
+    _LOGGER.info("Classifying dataset %r", predict_dataset)
+    model = pickle.load((open(model_path, "rb")))
+    vectorizer = pickle.load(open(vectorizer_path, "rb"))
+    prediction = classification(model=model, vectorizer=vectorizer, classify_dataset=predict_dataset)
+    file = open(output, "w")
+    for elem in prediction:
+        file.write(str(elem) + "\n")
+    file.close()
+    _LOGGER.info("Classified successfully, stored under %r", output)
+
+
+@cli.command("train")
+@click.argument("train-dataset", nargs=1, metavar="FOLDER", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_TRAIN_DATASET")
+@click.argument("max-d", nargs=1, metavar="INTEGER", envvar="THOTH_SOLVER_ERROR_MAX_DISTANCE")
+@click.argument("output", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_OUTPUT")
+def train(train_dataset: str, max_d: str, output: str) -> None:
+    """Train clusters and KNN on dataset with given max_d."""
+    _LOGGER.info("Training dataset %r", train_dataset)
+    max_d_int = int(max_d)
+    model, vectorizer = cluster_errors(solver_path=train_dataset, max_d=max_d_int)
+    knn_pickle = open(output, "wb")
+    vectorizer_pickle = open("vectorizer_" + output, "wb")
+    pickle.dump(model, knn_pickle)
+    pickle.dump(vectorizer, vectorizer_pickle)
+    _LOGGER.info("Trained successfully, stored under (vectorizer_)%r", output)
 
 
 __name__ == "__main__" and cli()

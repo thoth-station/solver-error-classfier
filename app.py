@@ -51,7 +51,7 @@ random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
 
 
-def split_text(text: str) -> List:
+def split_text(text: str) -> List[str]:
     """Split/Tokenize text by new line character."""
     new_text = text.split("\n")
     return new_text

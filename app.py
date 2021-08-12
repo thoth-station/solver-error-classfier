@@ -226,7 +226,7 @@ def cluster_errors(*, solver_path: str, max_d: int) -> Tuple[KNeighborsClassifie
     return knn, vectorizer
 
 
-def classification(*, model: KNeighborsClassifier, vectorizer: TfidfVectorizer, classify_dataset: str) -> List:
+def classification(*, model: KNeighborsClassifier, vectorizer: TfidfVectorizer, classify_dataset: str) -> List[int]:
     """Classify new data at classify_dataset with knn model."""
     df_errors = preprocess_single_document(classify_dataset)
     x = vectorizer.transform(df_errors["message_processed"])
@@ -289,13 +289,14 @@ def cli(
 def classify(model_path: str, vectorizer_path: str, predict_dataset: str, output: str) -> None:
     """Classify dataset with given model and vectorizer."""
     _LOGGER.info("Classifying dataset %r", predict_dataset)
-    model = pickle.load((open(model_path, "rb")))
-    vectorizer = pickle.load(open(vectorizer_path, "rb"))
+    with open(model_path, "rb") as file:
+        model = pickle.load(file)
+    with open(vectorizer_path, "rb") as vectorizer_file:
+        vectorizer = pickle.load(vectorizer_file)
     prediction = classification(model=model, vectorizer=vectorizer, classify_dataset=predict_dataset)
-    file = open(output, "w")
-    for elem in prediction:
-        file.write("Document belongs to Cluster" + str(elem) + "\n")
-    file.close()
+    with open(output, "w") as output_file:
+        for elem in prediction:
+            output_file.write("Document belongs to Cluster" + str(elem) + "\n")
     _LOGGER.info("Classified successfully, stored under %r", output)
 
 
@@ -308,10 +309,12 @@ def train(train_dataset: str, max_d: str, output: str) -> None:
     _LOGGER.info("Training dataset %r", train_dataset)
     max_d_int = int(max_d)
     model, vectorizer = cluster_errors(solver_path=train_dataset, max_d=max_d_int)
-    knn_pickle = open(output, "wb")
-    vectorizer_pickle = open("vectorizer_" + output, "wb")
-    pickle.dump(model, knn_pickle)
-    pickle.dump(vectorizer, vectorizer_pickle)
+    with open(output, "wb") as knn_pickle:
+        with open("vectorizer_" + output, "wb") as vectorizer_pickle:
+            knn_pickle = open(output, "wb")
+            vectorizer_pickle = open("vectorizer_" + output, "wb")
+            pickle.dump(model, knn_pickle)
+            pickle.dump(vectorizer, vectorizer_pickle)
     _LOGGER.info("Trained successfully, stored under (vectorizer_)%r", output)
 
 

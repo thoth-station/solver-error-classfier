@@ -231,7 +231,7 @@ def cli(
     _: click.Context,
     verbose: bool = False,
 ):
-    """Aggregate Github URLs for GitHub hosted projects on PyPI."""
+    """Classify errors occurred during installation of Python packages."""
     if verbose:
         _LOGGER.setLevel(logging.DEBUG)
 

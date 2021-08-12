@@ -128,7 +128,8 @@ def preprocess_document(solver_path: str) -> DataFrame:
             document_id = str(path).split("/")[-1]
             _LOGGER.debug("Processing solver document %r", document_id)
             current_file = open(path, "r")
-            data = json.load(current_file)
+            with open(path, "r") as current_file:
+                data = json.load(current_file)
             if data["result"]["errors"] != []:
                 error_documents.append(data)
             current_file.close()

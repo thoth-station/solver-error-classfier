@@ -131,11 +131,44 @@ def preprocess_document(solver_path: str) -> DataFrame:
             with open(path, "r") as current_file:
                 data = json.load(current_file)
             if data["result"]["errors"] != []:
+                _LOGGER.debug("Solver Document %r contains error", document_id)
                 error_documents.append(data)
-            current_file.close()
     random.shuffle(error_documents)
     _LOGGER.debug("number of docs: %r", len(error_documents))
     df = json_normalize(error_documents, sep="_")
+
+    df_errors = pd.DataFrame()
+    df_errors["result_errors"] = df["result_errors"]
+    df_errors["message"] = df_errors.apply(lambda row: row.result_errors[0]["details"]["message"], axis=1)
+    df_errors["tokenized_message"] = df_errors.apply(lambda row: split_text(row.message), axis=1)
+    df_errors["exit_status"] = df_errors.apply(lambda row: row.tokenized_message[0], axis=1)
+    df_errors["exit_status_ERROR"] = df_errors.apply(lambda row: get_error(row.exit_status), axis=1)
+    df_errors["command"] = df_errors["tokenized_message"].str[1]
+    df_errors["ERROR"] = df_errors["tokenized_message"].str[-2]
+    df_errors["error_info"] = df_errors["tokenized_message"].str[-4]
+    df_errors["error_label"] = df_errors["tokenized_message"].str[-5]
+    df_errors["cwd_info"] = df_errors["tokenized_message"].str[2:-6]
+    df_errors["error_for_analysis"] = df_errors["error_info"] + df_errors["error_label"]
+
+    df_errors["exit_status_ERROR_processed"] = df_errors.apply(
+        lambda row: process_exit_status_error(row.exit_status_ERROR), axis=1
+    )
+    df_errors["error_info_processed"] = df_errors.apply(lambda row: process_error_info(row.error_info), axis=1)
+    df_errors["message_processed"] = df_errors["exit_status_ERROR_processed"] + " " + df_errors["error_info_processed"]
+    df_errors["message_processed"] = df_errors.apply(lambda row: check_is_instance(row.message_processed), axis=1)
+    df_errors["message_processed"] = df_errors.apply(lambda row: remove_stopwords(row.message_processed), axis=1)
+    return df_errors
+
+
+def preprocess_single_document(solver_doc_path: str) -> DataFrame:
+    """Preprocess a single document with helperfunctions listed above, output dataframe with error_processed column."""
+    with open(solver_doc_path, "r") as file:
+        error_document = json.load(file)
+        if error_document["result"]["errors"] == []:
+            _LOGGER.error("Document %r does not have an error log.", solver_doc_path)
+            raise Exception("No error log found in document.")
+
+    df = json_normalize(error_document, sep="_")
 
     df_errors = pd.DataFrame()
     df_errors["result_errors"] = df["result_errors"]
@@ -185,7 +218,7 @@ def cluster_errors(*, solver_path: str, max_d: int) -> Tuple[KNeighborsClassifie
             data["message_processed"].to_csv("clusters/{0}.csv".format(i))
     except OSError as e:
         _LOGGER.error("Could not create clusters directory: %r", e)
-        raise
+        raise e
 
     knn = KNeighborsClassifier()
 
@@ -195,11 +228,18 @@ def cluster_errors(*, solver_path: str, max_d: int) -> Tuple[KNeighborsClassifie
 
 def classification(*, model: KNeighborsClassifier, vectorizer: TfidfVectorizer, classify_dataset: str) -> List:
     """Classify new data at classify_dataset with knn model."""
-    df_errors = preprocess_document(classify_dataset)
+    df_errors = preprocess_single_document(classify_dataset)
     x = vectorizer.transform(df_errors["message_processed"])
     x_arr = x.toarray()
     result = model.predict(x_arr)
-    df_errors["message_processed"].to_csv("clusters/result.csv")
+    solver_id = classify_dataset.split("/")[-1]
+    try:
+        if not os.path.exists("clusters"):
+            os.makedirs("clusters")
+        df_errors.to_csv("clusters/{0}.csv".format(solver_id))
+    except OSError as e:
+        _LOGGER.error("Could not create clusters directory: %r", e)
+        raise e
     return result
 
 
@@ -254,7 +294,7 @@ def classify(model_path: str, vectorizer_path: str, predict_dataset: str, output
     prediction = classification(model=model, vectorizer=vectorizer, classify_dataset=predict_dataset)
     file = open(output, "w")
     for elem in prediction:
-        file.write(str(elem) + "\n")
+        file.write("Document belongs to Cluster" + str(elem) + "\n")
     file.close()
     _LOGGER.info("Classified successfully, stored under %r", output)
 

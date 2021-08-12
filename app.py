@@ -242,7 +242,7 @@ def cli(
 @cli.command("classify")
 @click.argument("model-path", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_MODEL_PATH")
 @click.argument("vectorizer-path", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_VECTORIZER_PATH")
-@click.argument("predict-dataset", nargs=1, metavar="FOLDER", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_PREDICT_DATASET")
+@click.argument("predict-dataset", nargs=1, metavar="DIRECTORY", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_PREDICT_DATASET")
 @click.argument("output", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_OUTPUT")
 def classify(model_path: str, vectorizer_path: str, predict_dataset: str, output: str) -> None:
     """Classify dataset with given model and vectorizer."""

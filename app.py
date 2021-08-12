@@ -258,7 +258,7 @@ def classify(model_path: str, vectorizer_path: str, predict_dataset: str, output
 
 
 @cli.command("train")
-@click.argument("train-dataset", nargs=1, metavar="FOLDER", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_TRAIN_DATASET")
+@click.argument("train-dataset", nargs=1, metavar="DIRECTORY", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_TRAIN_DATASET")
 @click.argument("max-d", nargs=1, metavar="INTEGER", envvar="THOTH_SOLVER_ERROR_MAX_DISTANCE")
 @click.argument("output", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_OUTPUT")
 def train(train_dataset: str, max_d: str, output: str) -> None:

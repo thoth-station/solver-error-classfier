@@ -28,7 +28,7 @@ def get_install_requires():
 
 def get_version():
     """Get current version of solver-error-classifier module."""
-    with open(os.path.join("thoth", "solver-error-classifier", "__init__.py")) as f:
+    with open(os.path.join("template", "version.py")) as f:
         content = f.readlines()
 
     for line in content:
@@ -90,7 +90,7 @@ setup(
     name="thoth-solver-error-classifier",
     version=VERSION,
     description="Solver error log classifier for the Thoth project",
-    long_description=read("README.rst"),
+    long_description=read("README.md"),
     author="Bjoern Hasemann",
     author_email="bhaseman@redhat.com",
     license="GPLv3+",
@@ -98,7 +98,7 @@ setup(
     url="https://github.com/thoth-station/solver-error-classfier",
     download_url="https://pypi.org/project/solver-error-classifier",
     package_data={"thoth.solver-error-classifier": ["py.typed", "data/tensorflow/api.json"]},
-    entry_points={"console_scripts": ["thoth-solver-error-classifier=thoth.solver-error-classifier.cli:cli"]},
+    entry_points={"console_scripts": ["thoth-solver-error-classifier=thoth.solver.error.classifier.cli:cli"]},
     zip_safe=False,
     install_requires=get_install_requires(),
     cmdclass={"test": Test},

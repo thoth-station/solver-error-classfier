@@ -185,6 +185,7 @@ def cluster_errors(*, solver_path: str, max_d: int) -> Tuple[KNeighborsClassifie
             data["message_processed"].to_csv("clusters/{0}.csv".format(i))
     except OSError as e:
         _LOGGER.error("Could not create clusters directory: %r", e)
+        raise
 
     knn = KNeighborsClassifier()
 

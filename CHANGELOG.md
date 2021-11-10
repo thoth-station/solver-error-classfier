@@ -1,7 +1,3 @@
-# Changelog for Thoth's Template GitHub Project
+# Changelog for Thoth's Solver Error Classifier
 
-## [0.1.0] - 2019-Sep-11 - goern
-
-### Added
-
-all the things that you see...
+## Release 0.1.0

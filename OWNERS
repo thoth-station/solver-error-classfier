@@ -1,0 +1,10 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+approvers:
+  - bjoernh2000
+  - goern
+  - fridex
+reviewers:
+  - pacospace
+  - harshad16
+  - kpostoffice

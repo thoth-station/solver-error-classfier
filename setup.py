@@ -28,7 +28,7 @@ def get_install_requires():
 
 def get_version():
     """Get current version of solver-error-classifier module."""
-    with open(os.path.join("template", "version.py")) as f:
+    with open(os.path.join("version.py")) as f:
         content = f.readlines()
 
     for line in content:

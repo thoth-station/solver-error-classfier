@@ -17,7 +17,6 @@
 
 """This is the main script of the solver-error-classifier."""
 from pandas.core.frame import DataFrame
-from version import __version__
 import logging
 import random
 from typing import List
@@ -41,6 +40,7 @@ from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
 
 init_logging()
+__version__ = "0.1.1"
 _LOGGER = logging.getLogger("thoth.solver_project_url")
 _DATE_FORMAT = "%Y-%m-%d"
 

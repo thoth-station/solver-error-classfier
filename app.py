@@ -17,7 +17,7 @@
 
 """This is the main script of the solver-error-classifier."""
 from pandas.core.frame import DataFrame
-from template.version import __version__
+from version import __version__
 import logging
 import random
 from typing import List

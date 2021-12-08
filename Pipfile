@@ -12,7 +12,7 @@ requests = "*"
 numpy = "*"
 nltk = "*"
 pandas = "*"
-sklearn = "*"
+scikit-learn = "*"
 scipy = "*"
 matplotlib = "*"
 

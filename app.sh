@@ -6,10 +6,10 @@
 
 case $THOTH_SOLVER_ERROR_CLASSIFIER_CLASSIFY in
     'classify')
-        exec /opt/app-root/bin/python3 app.py classify
+        exec /opt/app-root/bin/python3 classify.py classify
         ;;
     'train')
-        exec /opt/app-root/bin/python3 app.py train
+        exec /opt/app-root/bin/python3 classify.py train
         ;;
     *)
         echo "Application configuration error - no solver-error-classifier-job subcommand specified." >&2

@@ -17,4 +17,4 @@
 
 """This file carries the version of the solver error classifier job."""
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"

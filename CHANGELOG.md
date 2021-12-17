@@ -1,5 +1,10 @@
 # Changelog for Thoth's Solver Error Classifier
 
+## Release 0.1.5 (2021-12-17T20:39:32)
+* fixed setup.py
+* fixed merge conflicts and squashed versioning, app and file changes
+* :arrow_up: Automatic update of dependencies by Kebechet for the ubi8 environment
+
 ## Release 0.1.4 (2021-12-17T16:31:17)
 * changed app.py
 * added app.sh

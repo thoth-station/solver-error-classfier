@@ -41,7 +41,6 @@ from scipy.cluster.hierarchy import fcluster
 from version import __version__
 
 init_logging()
-
 _LOGGER = logging.getLogger("thoth.solver_project_url")
 _DATE_FORMAT = "%Y-%m-%d"
 

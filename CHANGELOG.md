@@ -1,5 +1,9 @@
 # Changelog for Thoth's Solver Error Classifier
 
+## Release 0.1.4 (2021-12-17T16:31:17)
+* changed app.py
+* added app.sh
+
 ## Release 0.1.3 (2021-12-10T16:14:09)
 * Auto update the dependencies
 * fixed pipfile and setup.py

@@ -281,7 +281,7 @@ def cli(
     _LOGGER.info("Version: %s", __component_version__)
 
 
-@cli.command("classify")
+@cli.command()
 @click.argument("model-path", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_MODEL_PATH")
 @click.argument("vectorizer-path", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_VECTORIZER_PATH")
 @click.argument("predict-dataset", nargs=1, metavar="DIRECTORY", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_PREDICT_DATASET")
@@ -300,7 +300,7 @@ def classify(model_path: str, vectorizer_path: str, predict_dataset: str, output
     _LOGGER.info("Classified successfully, stored under %r", output)
 
 
-@cli.command("train")
+@cli.command()
 @click.argument("train-dataset", nargs=1, metavar="DIRECTORY", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_TRAIN_DATASET")
 @click.argument("max-d", nargs=1, metavar="INTEGER", envvar="THOTH_SOLVER_ERROR_MAX_DISTANCE")
 @click.argument("output", nargs=1, metavar="FILE", envvar="THOTH_SOLVER_ERROR_CLASSIFIER_OUTPUT")

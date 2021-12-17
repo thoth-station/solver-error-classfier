@@ -38,9 +38,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
+from version import __version__
 
 init_logging()
-__version__ = "0.1.3"
+
 _LOGGER = logging.getLogger("thoth.solver_project_url")
 _DATE_FORMAT = "%Y-%m-%d"
 

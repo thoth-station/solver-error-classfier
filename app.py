@@ -40,7 +40,7 @@ from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
 
 init_logging()
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 _LOGGER = logging.getLogger("thoth.solver_project_url")
 _DATE_FORMAT = "%Y-%m-%d"
 
